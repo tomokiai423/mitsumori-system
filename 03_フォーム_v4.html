@@ -320,6 +320,25 @@
       line-height: 1.6;
     }
 
+    /* ==================== Input with Unit ==================== */
+    .input-with-unit {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-with-unit .form-input {
+      flex: 1;
+      max-width: 200px;
+    }
+
+    .unit-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--color-secondary);
+      white-space: nowrap;
+    }
+
     /* ==================== Options (Checkbox/Radio) ==================== */
     .options-list {
       display: flex;
@@ -845,17 +864,10 @@
                 <span class="tooltip">直近1年間の売上高の目安です。だいたいで構いません。</span>
               </span>
             </div>
-            <select class="form-select" id="annualRevenue" required>
-              <option value="">選択してください</option>
-              <option value="500万円未満">500万円未満</option>
-              <option value="500万〜1,000万円">500万〜1,000万円</option>
-              <option value="1,000万〜1,500万円">1,000万〜1,500万円</option>
-              <option value="1,500万〜3,000万円">1,500万〜3,000万円</option>
-              <option value="3,000万〜5,000万円">3,000万〜5,000万円</option>
-              <option value="5,000万〜1億円">5,000万〜1億円</option>
-              <option value="1億〜3億円">1億〜3億円</option>
-              <option value="3億円以上">3億円以上</option>
-            </select>
+            <div class="input-with-unit">
+              <input type="text" class="form-input" id="annualRevenue" required placeholder="例：1000">
+              <span class="unit-label">万円</span>
+            </div>
           </div>
 
           <div class="form-group">
@@ -1257,7 +1269,7 @@
           当サービスは <strong>Google Apps Script</strong> を活用した業務効率化ツールの開発に特化しており、スマホアプリの開発や既存サービスのカスタマイズには対応しておりません。<br><br>
           ご期待に沿えず恐れ入りますが、ご理解いただけますと幸いです。
         </div>
-        <button class="btn btn-secondary" onclick="location.reload()">最初に戻る</button>
+        <button class="btn btn-secondary" onclick="resetToStart()">最初に戻る</button>
       </div>
 
       <!-- ==================== Loading Screen ==================== -->
@@ -1466,6 +1478,35 @@
         .withFailureHandler(showError)
         .processFormSubmission(getFormData());
     });
+
+    function resetToStart() {
+      // フォームをリセット
+      document.getElementById('estimateForm').reset();
+
+      // 現在のステップを1に戻す
+      currentStep = 1;
+
+      // すべての画面を非表示
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('rejectionScreen').style.display = 'none';
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('resultScreen').style.display = 'none';
+
+      // プログレスセクションを表示
+      document.getElementById('progressSection').style.display = 'block';
+
+      // Step 1を表示
+      document.querySelector('.step[data-step="1"]').classList.add('active');
+
+      // プログレスバーを更新
+      updateProgress();
+
+      // 文字カウンターをリセット
+      updateCharCounter();
+
+      // ページトップにスクロール
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     updateCharCounter();
     updateProgress();

@@ -320,44 +320,91 @@ function simpleJudgment(data) {
 // 自動返信メール送信
 // ===========================================
 function sendAutoReplyEmail(data, judgment, ngReason) {
-  const ss = getSpreadsheet();
-  const templateSheet = ss.getSheetByName('メールテンプレート');
-  const templates = templateSheet.getDataRange().getValues();
-
   const isTestMode = getConfig('テストモード') === 'TRUE';
 
-  let templateRow = null;
-  for (let i = 1; i < templates.length; i++) {
-    const pattern = templates[i][0];
-    if (judgment === 'OK' && pattern.includes('OK')) {
-      templateRow = templates[i];
-      break;
-    } else if (judgment === 'BORDERLINE' && pattern.includes('BORDERLINE')) {
-      templateRow = templates[i];
-      break;
-    } else if (judgment === 'NG（工数オーバー）' && pattern.includes('工数オーバー')) {
-      templateRow = templates[i];
-      break;
-    } else if (judgment === 'NG（技術制約）' && pattern.includes('技術制約')) {
-      templateRow = templates[i];
-      break;
+  let subject = '';
+  let body = '';
+
+  // OK判定の場合は専用メールを送信
+  if (judgment === 'OK') {
+    const deliveryDate = getDeliveryDate();
+    const timerexUrl = 'https://timerex.net/s/cz1917903_47c5/b09b13d3';
+
+    subject = '【無料開発OK】システム開発のお申込みありがとうございます';
+    body = `${data.companyName}
+${data.contactName} 様
+
+この度は、システム開発のお問い合わせをいただき
+誠にありがとうございます。
+
+ご依頼内容を確認させていただいた結果、
+【無料開発の対象】として対応可能と判定されました。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 納品予定日について
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+納品予定日：${deliveryDate}（お申込みから約1週間後）
+
+上記の日程以降で、納品日のご予約をお願いいたします。
+下記URLより、ご都合の良い日時をお選びください。
+
+▼ 納品日のご予約はこちら
+${timerexUrl}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 今後の流れ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 上記URLから納品日をご予約
+2. 開発作業を進めさせていただきます
+3. 納品日にシステムをお渡し・ご説明
+
+ご不明な点がございましたら、
+お気軽にこのメールにご返信ください。
+
+どうぞよろしくお願いいたします。
+
+──────────────────────────
+合同会社リバイラル
+システム開発事業部
+──────────────────────────`;
+  } else {
+    // OK以外はスプレッドシートのテンプレートを使用
+    const ss = getSpreadsheet();
+    const templateSheet = ss.getSheetByName('メールテンプレート');
+    const templates = templateSheet.getDataRange().getValues();
+
+    let templateRow = null;
+    for (let i = 1; i < templates.length; i++) {
+      const pattern = templates[i][0];
+      if (judgment === 'BORDERLINE' && pattern.includes('BORDERLINE')) {
+        templateRow = templates[i];
+        break;
+      } else if (judgment === 'NG（工数オーバー）' && pattern.includes('工数オーバー')) {
+        templateRow = templates[i];
+        break;
+      } else if (judgment === 'NG（技術制約）' && pattern.includes('技術制約')) {
+        templateRow = templates[i];
+        break;
+      }
     }
+
+    if (!templateRow) {
+      console.log('テンプレートが見つかりませんでした: ' + judgment);
+      return;
+    }
+
+    const schedulingUrl = getConfig('日程調整URL') || 'https://calendly.com/your-link';
+
+    subject = templateRow[1];
+    body = templateRow[2];
+
+    body = body.replace(/\{\{会社名\}\}/g, data.companyName);
+    body = body.replace(/\{\{担当者名\}\}/g, data.contactName);
+    body = body.replace(/\{\{日程調整URL\}\}/g, schedulingUrl);
+    body = body.replace(/\{\{NG理由\}\}/g, ngReason || '');
   }
-
-  if (!templateRow) {
-    console.log('テンプレートが見つかりませんでした: ' + judgment);
-    return;
-  }
-
-  const schedulingUrl = getConfig('日程調整URL') || 'https://calendly.com/your-link';
-
-  let subject = templateRow[1];
-  let body = templateRow[2];
-
-  body = body.replace(/\{\{会社名\}\}/g, data.companyName);
-  body = body.replace(/\{\{担当者名\}\}/g, data.contactName);
-  body = body.replace(/\{\{日程調整URL\}\}/g, schedulingUrl);
-  body = body.replace(/\{\{NG理由\}\}/g, ngReason || '');
 
   if (isTestMode) {
     console.log('=== テストモード：メール送信スキップ ===');
@@ -371,6 +418,23 @@ function sendAutoReplyEmail(data, judgment, ngReason) {
       body: body
     });
   }
+}
+
+// ===========================================
+// 納品予定日を計算（1週間後）
+// ===========================================
+function getDeliveryDate() {
+  const today = new Date();
+  const deliveryDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const year = deliveryDate.getFullYear();
+  const month = deliveryDate.getMonth() + 1;
+  const day = deliveryDate.getDate();
+
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const weekday = weekdays[deliveryDate.getDay()];
+
+  return `${year}年${month}月${day}日（${weekday}）`;
 }
 
 // ===========================================
