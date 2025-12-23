@@ -666,11 +666,17 @@
     /* ==================== Responsive ==================== */
     @media (max-width: 600px) {
       body {
-        padding: 12px;
+        padding: 0;
+        background: var(--color-bg);
+      }
+
+      .container {
+        border-radius: 0;
+        box-shadow: none;
       }
 
       .header {
-        padding: 36px 24px 32px;
+        padding: 32px 20px 28px;
       }
 
       .header h1 {
@@ -678,11 +684,11 @@
       }
 
       .progress-section {
-        padding: 20px 24px;
+        padding: 16px 20px;
       }
 
       .form-content {
-        padding: 28px 24px;
+        padding: 24px 20px;
       }
 
       .option-label {
@@ -706,6 +712,10 @@
       .tooltip::after {
         left: 20px;
         transform: none;
+      }
+
+      .screen-center {
+        padding: 48px 20px;
       }
     }
   </style>
